@@ -43,3 +43,38 @@ def send_message(
         "id": str(result.inserted_id),
         **message_data
     }
+
+@router.get("/{user_id}", response_model=list[MessageResponse])
+def get_messages(
+    user_id: str,
+    current_user=Depends(get_current_user)
+):
+
+    current_user_id = str(current_user["_id"])
+
+    messages = messages_collection.find({
+        "$or": [
+            {
+                "sender_id": current_user_id,
+                "receiver_id": user_id
+            },
+            {
+                "sender_id": user_id,
+                "receiver_id": current_user_id
+            }
+        ]
+    }).sort("created_at", 1)
+
+    result = []
+
+    for message in messages:
+        result.append({
+            "id": str(message["_id"]),
+            "sender_id": message["sender_id"],
+            "receiver_id": message["receiver_id"],
+            "content": message["content"],
+            "created_at": message["created_at"],
+            "is_read": message["is_read"]
+        })
+
+    return result
