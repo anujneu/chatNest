@@ -2,6 +2,9 @@ from fastapi import FastAPI
 
 from app.database import client
 from app.routers.auth import router as auth_router
+from app.routers.users import router as users_router
+from app.routers.messages import router as messages_router
+
 
 app = FastAPI(title="ChatNest API")
 
@@ -21,3 +24,5 @@ def test_database():
 
 
 app.include_router(auth_router)
+app.include_router(users_router)
+app.include_router(messages_router)
