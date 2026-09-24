@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebSocket Test</title>
+  </head>
+  <body>
+    <h1>ChatNest WebSocket Test</h1>
+
+    <input id="messageInput" type="text" placeholder="Enter message" />
+
+    <button onclick="sendMessage()">Send</button>
+
+    <div id="messages"></div>
+
+    <script>
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNmFhZTVjOWE2YWE2MWRkOWFlMDVjOGFkIiwiZXhwIjoxNzkwMzQwNTE0fQ.kS4UtmosicvN2Ba9ucHSDkeoFI45bUo-Li-osN_Yt5c";
+
+      const socket = new WebSocket(
+        "ws://127.0.0.1:8000/messages/ws?token=" + token,
+      );
+
+      socket.onopen = function () {
+        document.getElementById("messages").innerHTML +=
+          "<p>Connected to ChatNest WebSocket</p>";
+      };
+
+      socket.onmessage = function (event) {
+        document.getElementById("messages").innerHTML +=
+          "<p>Server: " + event.data + "</p>";
+      };
+
+      socket.onclose = function () {
+        document.getElementById("messages").innerHTML += "<p>Disconnected</p>";
+      };
+
+      function sendMessage() {
+        const input = document.getElementById("messageInput");
+
+        socket.send(input.value);
+
+        input.value = "";
+      }
+    </script>
+  </body>
+</html>

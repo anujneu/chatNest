@@ -1,10 +1,16 @@
 from datetime import datetime, timezone
+from app.connection_manager import ConnectionManager
+
+manager = ConnectionManager()
 
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 
 from app.database import messages_collection, users_collection
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import (
+    get_current_user,
+    get_user_from_token
+)
 from app.schemas.message import (
     MessageCreate,
     MessageResponse,
@@ -152,6 +158,45 @@ def get_messages(
         })
 
     return result
+
+@router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+
+    token = websocket.query_params.get("token")
+
+    if not token:
+        await websocket.close(code=1008)
+        return
+
+    try:
+        current_user = get_user_from_token(token)
+
+    except Exception:
+        await websocket.close(code=1008)
+        return
+
+    user_id = str(current_user["_id"])
+
+    await manager.connect(user_id, websocket)
+
+    try:
+
+        while True:
+
+            message = await websocket.receive_text()
+
+            await manager.send_personal_message(
+                f"{current_user['username']}: {message}",
+                user_id
+            )
+
+    except WebSocketDisconnect:
+
+        manager.disconnect(user_id)
+
+        print(
+            f"{current_user['username']} disconnected"
+        )
 
 
 

@@ -56,3 +56,30 @@ def get_current_user(
         )
 
     return user
+
+
+def get_user_from_token(token: str):
+
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        user_id = payload.get("user_id")
+
+        if user_id is None:
+            raise Exception("Invalid token")
+
+    except JWTError:
+        raise Exception("Invalid or expired token")
+
+    user = users_collection.find_one({
+        "_id": ObjectId(user_id)
+    })
+
+    if not user:
+        raise Exception("User not found")
+
+    return user
